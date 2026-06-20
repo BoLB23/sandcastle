@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sandcastle-redis
+  namespace: sandcastle
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sandcastle-redis
+  template:
+    metadata:
+      labels:
+        app: sandcastle-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+          readinessProbe:
+            tcpSocket:
+              port: 6379

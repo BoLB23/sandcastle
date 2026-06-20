@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: sandcastle-api
+  namespace: sandcastle
+spec:
+  selector:
+    app: sandcastle-api
+  ports:
+    - name: http
+      port: 4000
+      targetPort: 4000

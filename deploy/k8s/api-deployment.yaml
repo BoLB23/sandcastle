@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sandcastle-api
+  namespace: sandcastle
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sandcastle-api
+  template:
+    metadata:
+      labels:
+        app: sandcastle-api
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/bolb/the-sandcastle-api:latest
+          envFrom:
+            - configMapRef:
+                name: sandcastle-config
+            - secretRef:
+                name: sandcastle-secrets
+          ports:
+            - containerPort: 4000
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 4000
+          volumeMounts:
+            - name: uploads
+              mountPath: /data/uploads
+      volumes:
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: sandcastle-uploads

@@ -1,0 +1,14 @@
+.git
+.github
+node_modules
+apps/*/node_modules
+apps/*/.next
+apps/*/dist
+packages/*/node_modules
+coverage
+.env
+.env.*
+!.env.example
+.DS_Store
+pnpm-debug.log*
+*.tsbuildinfo

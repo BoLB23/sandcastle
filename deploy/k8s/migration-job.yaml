@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sandcastle-migrate
+  namespace: sandcastle
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: ghcr.io/bolb/the-sandcastle-api:latest
+          command: ["node_modules/.bin/prisma", "migrate", "deploy", "--schema", "prisma/schema.prisma"]
+          envFrom:
+            - configMapRef:
+                name: sandcastle-config
+            - secretRef:
+                name: sandcastle-secrets
+  backoffLimit: 2

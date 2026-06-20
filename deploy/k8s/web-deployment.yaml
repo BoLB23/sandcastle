@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sandcastle-web
+  namespace: sandcastle
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sandcastle-web
+  template:
+    metadata:
+      labels:
+        app: sandcastle-web
+    spec:
+      containers:
+        - name: web
+          image: ghcr.io/bolb/the-sandcastle-web:latest
+          env:
+            - name: NEXT_PUBLIC_API_URL
+              value: /api
+            - name: NEXT_PUBLIC_REALTIME_URL
+              value: /ws
+          ports:
+            - containerPort: 3000
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000

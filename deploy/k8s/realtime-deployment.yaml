@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sandcastle-realtime
+  namespace: sandcastle
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sandcastle-realtime
+  template:
+    metadata:
+      labels:
+        app: sandcastle-realtime
+    spec:
+      containers:
+        - name: realtime
+          image: ghcr.io/bolb/the-sandcastle-realtime:latest
+          envFrom:
+            - configMapRef:
+                name: sandcastle-config
+            - secretRef:
+                name: sandcastle-secrets
+          ports:
+            - containerPort: 4001
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 4001

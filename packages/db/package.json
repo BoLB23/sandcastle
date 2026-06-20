@@ -1,0 +1,29 @@
+{
+  "name": "@sandcastle/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "generate": "prisma generate --schema ./prisma/schema.prisma",
+    "lint": "eslint src prisma --ext .ts",
+    "migrate": "prisma migrate deploy --schema ./prisma/schema.prisma",
+    "seed": "tsx ./prisma/seed.ts",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "prisma": {
+    "schema": "./prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^2.4.3"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "prisma": "^5.22.0",
+    "tsx": "^4.19.2"
+  }
+}

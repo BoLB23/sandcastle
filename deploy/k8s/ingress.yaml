@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sandcastle-web
+  namespace: sandcastle
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - sandcastle.lab.bolblab.org
+      secretName: sandcastle-tls
+  rules:
+    - host: sandcastle.lab.bolblab.org
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sandcastle-web
+                port:
+                  number: 3000

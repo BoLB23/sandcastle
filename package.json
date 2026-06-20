@@ -1,0 +1,26 @@
+{
+  "name": "the-sandcastle",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Private coordination app for one permanent friend group.",
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm --parallel --filter @sandcastle/web --filter @sandcastle/api --filter @sandcastle/realtime dev",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "db:generate": "pnpm --filter @sandcastle/db generate",
+    "db:migrate": "pnpm --filter @sandcastle/db migrate",
+    "db:seed": "pnpm --filter @sandcastle/db seed"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.7",
+    "eslint": "^9.18.0",
+    "prettier": "^3.4.2",
+    "tsup": "^8.3.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}

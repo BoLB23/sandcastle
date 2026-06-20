@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sandcastle-config
+  namespace: sandcastle
+data:
+  NODE_ENV: production
+  PUBLIC_APP_URL: https://sandcastle.lab.bolblab.org
+  API_PORT: "4000"
+  REALTIME_PORT: "4001"
+  REDIS_URL: redis://sandcastle-redis:6379
+  UPLOAD_ROOT: /data/uploads
