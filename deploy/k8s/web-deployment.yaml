@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: ghcr.io/bolb/the-sandcastle-web:latest
+          image: ghcr.io/BoLB23/the-sandcastle-web:latest
           env:
             - name: NEXT_PUBLIC_API_URL
               value: /api

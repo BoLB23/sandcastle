@@ -14,17 +14,19 @@ The Kubernetes manifests are intentionally single-group and homelab-oriented. Th
 
 The GitHub Actions workflow builds all three images on pull requests without pushing. On `main`, it pushes:
 
-- `ghcr.io/<owner>/the-sandcastle-web:latest`
-- `ghcr.io/<owner>/the-sandcastle-api:latest`
-- `ghcr.io/<owner>/the-sandcastle-realtime:latest`
+- `ghcr.io/BoLB23/the-sandcastle-web:latest`
+- `ghcr.io/BoLB23/the-sandcastle-api:latest`
+- `ghcr.io/BoLB23/the-sandcastle-realtime:latest`
 - `sha-<shortsha>` tags for each image
 - `vYYYY.MM.DD-<shortsha>` tags for each image and a matching source tag
 
 The manifests default to `latest` for first bring-up. For a durable deployment, replace `latest` with the matching `sha-<shortsha>` or dated version tag before applying. Rollbacks should use the previous immutable image tag.
 
+Use `scripts/deploy.sh <image-tag>` to render the manifests with a specific tag and apply them in one shot. For example, pass the `sha-<shortsha>` or `vYYYY.MM.DD-<shortsha>` tag emitted by GitHub Actions.
+
 ## Secrets
 
-Copy `deploy/k8s/secret.example.yaml` to a private secret manifest or manage equivalent values through OpenBao or External Secrets.
+Copy `deploy/k8s/secret.example.yaml` to a private secret manifest, such as `deploy/k8s/secret.yaml`, or manage equivalent values through OpenBao or External Secrets.
 
 Required:
 

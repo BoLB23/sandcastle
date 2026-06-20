@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: realtime
-          image: ghcr.io/bolb/the-sandcastle-realtime:latest
+          image: ghcr.io/BoLB23/the-sandcastle-realtime:latest
           envFrom:
             - configMapRef:
                 name: sandcastle-config
