@@ -1,111 +1,76 @@
 # Deployment
 
-The Kubernetes manifests are intentionally single-group and homelab-oriented. They assume an existing PostgreSQL service, nginx ingress, and cert-manager.
+Sandcastle is deployed as three images in one namespace: `web`, `api`, and `realtime`. Postgres stays in the existing CNPG namespace; Redis runs in `sandcastle`.
 
 ## Prerequisites
 
-- PostgreSQL database and user created in the existing CNPG cluster.
-- DNS for `sandcastle.lab.bolblab.org` pointing at the ingress controller.
-- nginx ingress class named `nginx`.
-- cert-manager `ClusterIssuer` named `letsencrypt-production`.
-- GHCR images published by `.github/workflows/docker-images.yml`.
-
-## Images
-
-The GitHub Actions workflow builds all three images on pull requests without pushing. On `main`, it pushes:
-
-- `ghcr.io/BoLB23/the-sandcastle-web:latest`
-- `ghcr.io/BoLB23/the-sandcastle-api:latest`
-- `ghcr.io/BoLB23/the-sandcastle-realtime:latest`
-- `sha-<shortsha>` tags for each image
-- `vYYYY.MM.DD-<shortsha>` tags for each image and a matching source tag
-
-The manifests default to `latest` for first bring-up. For a durable deployment, replace `latest` with the matching `sha-<shortsha>` or dated version tag before applying. Rollbacks should use the previous immutable image tag.
-
-Use `scripts/deploy.sh <image-tag>` to render the manifests with a specific tag and apply them in one shot. For example, pass the `sha-<shortsha>` or `vYYYY.MM.DD-<shortsha>` tag emitted by GitHub Actions.
+- DNS for `sandcastle.lab.bolblab.org`
+- ingress class `nginx`
+- cert-manager `ClusterIssuer` named `letsencrypt-production`
+- a Postgres database reachable from `postgres-rw.postgres.svc.cluster.local:5432`
+- published immutable GHCR tags for:
+  - `ghcr.io/bolb23/the-sandcastle-web:<tag>`
+  - `ghcr.io/bolb23/the-sandcastle-api:<tag>`
+  - `ghcr.io/bolb23/the-sandcastle-realtime:<tag>`
 
 ## Secrets
 
-Copy `deploy/k8s/secret.example.yaml` to a private secret manifest, such as `deploy/k8s/secret.yaml`, or manage equivalent values through OpenBao or External Secrets.
-
-Required:
-
-- `DATABASE_URL`
-- `AUTH_SECRET`, at least 32 random characters
-- `SEED_ADMIN_EMAIL`
-- `SEED_ADMIN_PASSWORD`, at least 12 characters
-- `SEED_ADMIN_NAME`
-
-Optional:
-
-- `GOOGLE_CLIENT_ID`
-- `GOOGLE_CLIENT_SECRET`
-
-If Google OAuth is not configured, email/password invite onboarding still works.
-
-## First Deploy
-
-Apply infrastructure objects first:
+Prefer External Secrets plus OpenBao when ESO is available. Apply these in namespace order:
 
 ```bash
 kubectl apply -f deploy/k8s/namespace.yaml
 kubectl apply -f deploy/k8s/configmap.yaml
-kubectl apply -f deploy/k8s/secret.yaml
-kubectl apply -f deploy/k8s/upload-pvc.yaml
+kubectl apply -f deploy/k8s/secret-store.yaml
+kubectl apply -f deploy/k8s/external-secret.yaml
+```
+
+If ESO is not available yet, create `deploy/k8s/secret.yaml` from `deploy/k8s/secret.example.yaml` and apply that instead.
+
+Required keys:
+
+- `DATABASE_URL`
+- `AUTH_SECRET`
+- `SEED_ADMIN_EMAIL`
+- `SEED_ADMIN_PASSWORD`
+- `SEED_ADMIN_NAME`
+
+## First Deploy
+
+Apply shared infrastructure:
+
+```bash
+kubectl apply -f deploy/k8s/namespace.yaml
+kubectl apply -f deploy/k8s/configmap.yaml
 kubectl apply -f deploy/k8s/redis-service.yaml
 kubectl apply -f deploy/k8s/redis-deployment.yaml
 ```
 
-Run migrations, then seed default channels and the first owner account:
+Apply secrets using either ESO or a direct secret manifest, then deploy with an immutable tag:
 
 ```bash
-kubectl apply -f deploy/k8s/migration-job.yaml
-kubectl wait --for=condition=complete job/sandcastle-migrate -n sandcastle --timeout=120s
-
-kubectl apply -f deploy/k8s/seed-job.yaml
-kubectl wait --for=condition=complete job/sandcastle-seed -n sandcastle --timeout=120s
+scripts/deploy.sh v2026.06.20-e7ce85d
 ```
 
-Then roll the services and ingress:
+The deploy script refuses `latest`, reruns migrations and seed, then rolls the workloads.
+
+## Validation
 
 ```bash
-kubectl apply -f deploy/k8s/api-service.yaml
-kubectl apply -f deploy/k8s/realtime-service.yaml
-kubectl apply -f deploy/k8s/web-service.yaml
-kubectl apply -f deploy/k8s/api-deployment.yaml
-kubectl apply -f deploy/k8s/realtime-deployment.yaml
-kubectl apply -f deploy/k8s/web-deployment.yaml
-kubectl apply -f deploy/k8s/api-ingress.yaml
-kubectl apply -f deploy/k8s/realtime-ingress.yaml
-kubectl apply -f deploy/k8s/ingress.yaml
-```
-
-Validate:
-
-```bash
-kubectl get pods,svc,ingress,pvc -n sandcastle
+kubectl get pods,svc,ingress -n sandcastle
 kubectl logs -n sandcastle job/sandcastle-migrate
 kubectl logs -n sandcastle job/sandcastle-seed
+kubectl get externalsecret,secretstore -n sandcastle
 ```
 
-## Rerunning Jobs
+Smoke-test these flows after rollout:
 
-Kubernetes Jobs are immutable once created. To rerun migrations or seed after changing images or env values:
-
-```bash
-kubectl delete job -n sandcastle sandcastle-migrate --ignore-not-found
-kubectl apply -f deploy/k8s/migration-job.yaml
-
-kubectl delete job -n sandcastle sandcastle-seed --ignore-not-found
-kubectl apply -f deploy/k8s/seed-job.yaml
-```
-
-The seed job is idempotent: it upserts default channels and the configured owner account.
-
-## Storage
-
-Uploads use `UPLOAD_ROOT=/data/uploads` and the API deployment mounts `sandcastle-uploads` there. The current claim requests `5Gi` with the cluster default storage class. Replace `deploy/k8s/upload-pvc.yaml` if the cluster needs a specific storage class, backup policy, or capacity.
+- login with the seeded owner
+- create an invite and accept it
+- post a channel message and confirm websocket fanout
+- create an event and RSVP from the invited user
+- save weekly availability
 
 ## Notes
 
-The manifests intentionally keep Postgres outside the namespace because the cluster already runs CNPG in `postgres`.
+- If another developer has already installed ESO cluster-wide, do not reinstall it. Apply only the namespace-scoped `SecretStore` and `ExternalSecret`.
+- OpenBao is currently referenced over in-cluster HTTP in `deploy/k8s/secret-store.yaml`; tighten TLS and auth policy in the cluster layer when available.

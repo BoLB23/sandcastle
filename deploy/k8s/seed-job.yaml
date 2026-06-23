@@ -9,7 +9,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: seed
-          image: ghcr.io/BoLB23/the-sandcastle-api:latest
+          image: ghcr.io/bolb23/the-sandcastle-api:latest
           command: ["node", "dist/seed.js"]
           envFrom:
             - configMapRef:

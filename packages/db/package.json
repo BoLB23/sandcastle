@@ -7,11 +7,11 @@
   "types": "./src/index.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json --noEmit",
-    "generate": "prisma generate --schema ./prisma/schema.prisma",
-    "lint": "eslint src prisma --ext .ts",
-    "migrate": "prisma migrate deploy --schema ./prisma/schema.prisma",
-    "seed": "tsx ./prisma/seed.ts",
-    "test": "vitest run --passWithNoTests",
+    "generate": "corepack pnpm exec prisma generate --schema ./prisma/schema.prisma",
+    "lint": "corepack pnpm exec eslint ../../eslint.config.mjs",
+    "migrate": "corepack pnpm exec prisma migrate deploy --schema ./prisma/schema.prisma",
+    "seed": "corepack pnpm exec tsx ./prisma/seed.ts",
+    "test": "corepack pnpm exec vitest run --passWithNoTests",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "prisma": {

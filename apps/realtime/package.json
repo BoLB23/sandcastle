@@ -4,11 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsup",
-    "dev": "tsx watch src/server.ts",
+    "build": "corepack pnpm exec tsup",
+    "dev": "corepack pnpm exec tsx watch src/server.ts",
     "start": "node dist/server.js",
-    "lint": "eslint src --ext .ts",
-    "test": "vitest run --passWithNoTests",
+    "lint": "corepack pnpm exec eslint ../../eslint.config.mjs",
+    "test": "corepack pnpm exec vitest run --passWithNoTests",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

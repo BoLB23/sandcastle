@@ -3,10 +3,9 @@ import { prisma } from "./client";
 
 const defaultChannels = [
   ["general", "Daily conversation and everything else."],
-  ["sports", "Games, takes, fantasy, and watch parties."],
-  ["gaming", "Squads, queues, patches, and clips."],
   ["plans", "Actual plans that need decisions."],
-  ["memes", "Low-stakes chaos."]
+  ["events", "Upcoming plans, RSVPs, and coordination."],
+  ["availability", "Weekly evening availability and scheduling."]
 ] as const;
 
 export async function seedDatabase() {
@@ -46,17 +45,11 @@ async function seedOwner() {
       role: "owner",
       passwordHash: await bcrypt.hash(password, 12),
       emailVerifiedAt: new Date(),
-      profile: { create: {} },
-      notificationPrefs: { create: {} }
+      profile: { create: {} }
     }
   });
 
   await prisma.userProfile.upsert({
-    where: { userId: user.id },
-    update: {},
-    create: { userId: user.id }
-  });
-  await prisma.notificationPreference.upsert({
     where: { userId: user.id },
     update: {},
     create: { userId: user.id }

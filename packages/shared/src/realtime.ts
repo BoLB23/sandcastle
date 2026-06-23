@@ -2,11 +2,8 @@ import { z } from "zod";
 
 export const realtimeTopicSchema = z.enum([
   "channel",
-  "thread",
-  "poll",
   "event",
   "availability",
-  "notification",
   "presence"
 ]);
 

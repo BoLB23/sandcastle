@@ -5,6 +5,7 @@ import { nanoid } from "nanoid";
 import { prisma } from "@sandcastle/db";
 import { realtimeEnvelopeSchema, type RealtimeEnvelope, type RealtimeTopic } from "@sandcastle/shared";
 import { env } from "./env";
+import crypto from "node:crypto";
 
 type Client = {
   socket: WebSocket;
@@ -39,7 +40,7 @@ wss.on("connection", async (socket, request) => {
   const urlToken = new URL(request.url ?? "", "http://localhost").searchParams.get("token");
   const token = getCookie(request.headers.cookie, "session") ?? urlToken;
   const session = token
-    ? await prisma.session.findUnique({ where: { token }, include: { user: true } })
+    ? await prisma.session.findUnique({ where: { token: hashToken(token) }, include: { user: true } })
     : null;
 
   if (!session || session.expiresAt < new Date()) {
@@ -47,7 +48,7 @@ wss.on("connection", async (socket, request) => {
     return;
   }
 
-  const client: Client = { socket, userId: session.userId, subscriptions: new Set(["notification"]) };
+  const client: Client = { socket, userId: session.userId, subscriptions: new Set() };
   clients.set(socket, client);
   void publish("presence", "user.online", session.userId, session.userId, {
     userId: session.userId,
@@ -76,9 +77,7 @@ function fanout(envelope: RealtimeEnvelope) {
   const key = `${envelope.topic}:${envelope.resourceId}`;
   for (const client of clients.values()) {
     const shouldSend =
-      client.subscriptions.has(key) ||
-      (envelope.topic === "notification" && envelope.resourceId === client.userId) ||
-      envelope.topic === "presence";
+      client.subscriptions.has(key) || envelope.topic === "presence";
     if (shouldSend && client.socket.readyState === client.socket.OPEN) {
       client.socket.send(JSON.stringify(envelope));
     }
@@ -136,4 +135,8 @@ function getCookie(header: string | undefined, name: string) {
     if (rawKey === name) return decodeURIComponent(rawValue.join("="));
   }
   return undefined;
+}
+
+function hashToken(token: string) {
+  return crypto.createHash("sha256").update(token).digest("hex");
 }

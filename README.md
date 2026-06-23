@@ -1,6 +1,6 @@
 # The Sandcastle
 
-A self-hosted private coordination app for one permanent friend group. The MVP focuses on scheduling, events, polls, realtime chat, threads, reminders, and gaming profiles.
+A self-hosted private coordination app for one permanent friend group. The current MVP scope is invite-based auth, owner/admin management, realtime channels, events with RSVP, and fixed evening availability in Eastern Time.
 
 ## Stack
 
@@ -16,7 +16,7 @@ A self-hosted private coordination app for one permanent friend group. The MVP f
 ```bash
 corepack enable
 pnpm install
-docker compose up -d postgres redis mailpit
+docker compose up -d postgres redis
 cp .env.example .env
 pnpm db:generate
 pnpm db:migrate
@@ -34,8 +34,8 @@ The production manifests assume:
 - Host: `sandcastle.lab.bolblab.org`
 - Postgres: existing CNPG service `postgres-rw.postgres.svc.cluster.local:5432`
 - Redis: dedicated in-namespace Redis deployment
-- Uploads: PVC-backed app storage first, with an S3-compatible abstraction reserved for later
-- Auth: app-owned Google/email/invite auth; Authelia can protect ingress later but is not the signup source
+- Auth: invite-based email/password auth with admin-generated reset links
+- Secrets: app secret sync should come from cluster-managed secrets or External Secrets / OpenBao
 
 ## Documentation
 

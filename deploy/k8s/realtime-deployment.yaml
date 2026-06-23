@@ -13,9 +13,11 @@ spec:
       labels:
         app: sandcastle-realtime
     spec:
+      securityContext:
+        runAsNonRoot: true
       containers:
         - name: realtime
-          image: ghcr.io/BoLB23/the-sandcastle-realtime:latest
+          image: ghcr.io/bolb23/the-sandcastle-realtime:latest
           envFrom:
             - configMapRef:
                 name: sandcastle-config
@@ -27,3 +29,7 @@ spec:
             httpGet:
               path: /healthz
               port: 4001
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]

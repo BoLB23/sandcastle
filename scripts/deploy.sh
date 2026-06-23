@@ -22,8 +22,12 @@ if [[ $# -lt 1 ]]; then
 fi
 
 image_tag="$1"
+if [[ "$image_tag" == "latest" ]]; then
+  echo "Refusing mutable image tag 'latest'. Use an immutable tag."
+  exit 1
+fi
 namespace="sandcastle"
-repo_prefix="${IMAGE_PREFIX:-ghcr.io/BoLB23/the-sandcastle}"
+repo_prefix="${IMAGE_PREFIX:-ghcr.io/bolb23/the-sandcastle}"
 tmpdir="$(mktemp -d)"
 
 cleanup() {
@@ -35,9 +39,9 @@ render_manifest() {
   local src="$1"
   local dst="$2"
   sed \
-    -e "s#ghcr.io/BoLB23/the-sandcastle-web:latest#${repo_prefix}-web:${image_tag}#g" \
-    -e "s#ghcr.io/BoLB23/the-sandcastle-api:latest#${repo_prefix}-api:${image_tag}#g" \
-    -e "s#ghcr.io/BoLB23/the-sandcastle-realtime:latest#${repo_prefix}-realtime:${image_tag}#g" \
+    -e "s#ghcr.io/bolb23/the-sandcastle-web:latest#${repo_prefix}-web:${image_tag}#g" \
+    -e "s#ghcr.io/bolb23/the-sandcastle-api:latest#${repo_prefix}-api:${image_tag}#g" \
+    -e "s#ghcr.io/bolb23/the-sandcastle-realtime:latest#${repo_prefix}-realtime:${image_tag}#g" \
     "$src" > "$dst"
 }
 
@@ -51,7 +55,6 @@ else
   echo "deploy/k8s/secret.yaml not found; apply your cluster secret separately before proceeding."
 fi
 
-kubectl apply -f deploy/k8s/upload-pvc.yaml
 kubectl apply -f deploy/k8s/redis-service.yaml
 kubectl apply -f deploy/k8s/redis-deployment.yaml
 

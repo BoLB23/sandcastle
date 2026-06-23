@@ -13,9 +13,11 @@ spec:
       labels:
         app: sandcastle-api
     spec:
+      securityContext:
+        runAsNonRoot: true
       containers:
         - name: api
-          image: ghcr.io/BoLB23/the-sandcastle-api:latest
+          image: ghcr.io/bolb23/the-sandcastle-api:latest
           envFrom:
             - configMapRef:
                 name: sandcastle-config
@@ -27,10 +29,7 @@ spec:
             httpGet:
               path: /healthz
               port: 4000
-          volumeMounts:
-            - name: uploads
-              mountPath: /data/uploads
-      volumes:
-        - name: uploads
-          persistentVolumeClaim:
-            claimName: sandcastle-uploads
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]

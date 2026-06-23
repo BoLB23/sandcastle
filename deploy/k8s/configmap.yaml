@@ -9,4 +9,3 @@ data:
   API_PORT: "4000"
   REALTIME_PORT: "4001"
   REDIS_URL: redis://sandcastle-redis:6379
-  UPLOAD_ROOT: /data/uploads

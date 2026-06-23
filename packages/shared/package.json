@@ -6,8 +6,8 @@
   "main": "./src/index.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint src --ext .ts",
-    "test": "vitest run",
+    "lint": "corepack pnpm exec eslint ../../eslint.config.mjs",
+    "test": "corepack pnpm exec vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

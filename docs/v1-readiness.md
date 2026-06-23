@@ -1,35 +1,29 @@
 # V1 Readiness
 
-## Ready For Repo Setup
+## Current Release Bar
 
-- Workspace packages typecheck, test, and build locally.
-- Docker image workflow exists for web, API, and realtime images.
-- Kubernetes manifests dry-run successfully.
-- Prisma schema validates and includes an initial committed migration.
-- First-run bootstrap is covered by `sandcastle-seed`.
-- Architecture and deployment docs are present.
+- invite-only email/password auth
+- owner/admin invite and reset-link management
+- channels with durable messages and websocket fanout
+- events with RSVP
+- fixed 7 PM to 11 PM Eastern weekly availability
+- homelab Kubernetes deployment with immutable tags
 
 ## Validation Commands
 
 ```bash
 corepack pnpm --filter @sandcastle/db generate
 corepack pnpm -r typecheck
-corepack pnpm -r test
 corepack pnpm -r build
+corepack pnpm -r test
+corepack pnpm -r lint
 env DATABASE_URL=postgresql://sandcastle:sandcastle@localhost:5432/sandcastle \
   corepack pnpm --filter @sandcastle/db exec prisma validate --schema ./prisma/schema.prisma
-kubectl apply --dry-run=client --validate=false -f deploy/k8s
-ruby -e 'require "yaml"; YAML.load_file(".github/workflows/docker-images.yml")'
+ruby -e 'require "yaml"; Dir["deploy/k8s/*.yaml"].sort.each { |f| YAML.load_stream(File.read(f)); puts f }'
 ```
 
-## Local Limitation
+## Known Gaps
 
-Docker daemon access is required to run `docker build` locally. If Docker is not running, use the GitHub Actions pull request build as the image-build validation path.
-
-## Known V1 Follow-Ups
-
-- Add API integration tests around invite acceptance, message ownership, and WebSocket session-cookie auth.
-- Replace `latest` image references with immutable tags in the deployment branch or GitOps layer.
-- Decide whether upload storage should stay PVC-backed or move to S3-compatible object storage.
-- Add email or push delivery behind the existing notification preferences.
-- Add Xbox OAuth as a modular optional integration after Kubernetes deployment is stable.
+- API integration and two-user browser tests still need to be expanded
+- ESO installation itself is not bundled here; only namespace-scoped Sandcastle integration is included
+- full Kubernetes apply or API-backed dry-run still requires live cluster access outside this sandbox
