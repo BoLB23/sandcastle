@@ -27,6 +27,7 @@ FROM node:22-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 RUN apk add --no-cache openssl
-COPY --from=build /prod/api /app
+COPY --from=build --chown=node:node /prod/api /app
+USER node
 EXPOSE 4000
 CMD ["node", "dist/server.js"]
