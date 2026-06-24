@@ -8,7 +8,6 @@ import {
   createChannelSchema,
   createEventSchema,
   createInviteSchema,
-  createMessageSchema,
   createResetLinkSchema,
   inviteAcceptSchema,
   listMessagesQuerySchema,
@@ -32,6 +31,7 @@ import {
 } from "./auth";
 import Redis from "ioredis";
 import { nanoid } from "nanoid";
+import { ZodError, z } from "zod";
 
 const availabilityDays = [
   "monday",
@@ -44,6 +44,9 @@ const availabilityDays = [
 ] as const;
 
 const availabilityHours = ["19", "20", "21", "22"] as const;
+const createMessageBodySchema = z.object({
+  body: z.string().min(1).max(4000)
+});
 
 type MessageRecord = Awaited<ReturnType<typeof prisma.message.findFirstOrThrow>>;
 
@@ -51,6 +54,23 @@ export async function buildApp() {
   const app = Fastify({ logger: true });
   const redis = new Redis(env.REDIS_URL, { lazyConnect: true, maxRetriesPerRequest: 1, connectTimeout: 2000 });
   let redisReady = false;
+
+  app.setErrorHandler((error, request, reply) => {
+    if (reply.sent) return;
+    if (error instanceof Error && (error.message === "unauthenticated" || error.message === "forbidden")) {
+      return;
+    }
+
+    if (error instanceof ZodError) {
+      return reply.code(400).send({
+        error: "Invalid request",
+        issues: error.issues
+      });
+    }
+
+    request.log.error({ err: error }, "unhandled api error");
+    return reply.code(500).send({ error: "Internal server error" });
+  });
 
   redis.on("error", (error: unknown) => {
     app.log.error({ err: error }, "api redis publish error");
@@ -315,7 +335,7 @@ export async function buildApp() {
   app.post("/channels/:id/messages", async (request, reply) => {
     const user = requirePermission(request, reply, "messages.create");
     const { id } = request.params as { id: string };
-    const body = createMessageSchema.parse(request.body);
+    const body = createMessageBodySchema.parse(request.body);
 
     const message = await prisma.message.create({
       data: {
@@ -355,7 +375,7 @@ export async function buildApp() {
   app.patch("/messages/:id", async (request, reply) => {
     const user = requireUser(request, reply);
     const { id } = request.params as { id: string };
-    const body = createMessageSchema.parse(request.body);
+    const body = createMessageBodySchema.parse(request.body);
     const existing = await prisma.message.findUnique({ where: { id } });
 
     if (!existing || existing.deletedAt) return reply.code(404).send({ error: "Message not found" });

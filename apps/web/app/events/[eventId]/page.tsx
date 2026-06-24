@@ -52,8 +52,8 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
       body: JSON.stringify({
         title: formData.get("title"),
         description: formData.get("description"),
-        startsAt: formData.get("startsAt"),
-        endsAt: formData.get("endsAt"),
+        startsAt: localDateTimeToIsoString(formData.get("startsAt")),
+        endsAt: localDateTimeToIsoString(formData.get("endsAt")),
         status: formData.get("status")
       })
     });
@@ -122,4 +122,9 @@ function toDateTimeLocal(value: string) {
   const date = new Date(value);
   const pad = (next: number) => `${next}`.padStart(2, "0");
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function localDateTimeToIsoString(value: FormDataEntryValue | null) {
+  if (typeof value !== "string" || !value) return value;
+  return new Date(value).toISOString();
 }

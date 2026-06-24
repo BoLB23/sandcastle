@@ -43,8 +43,8 @@ export default function EventsPage() {
         body: JSON.stringify({
           title: formData.get("title"),
           description: formData.get("description"),
-          startsAt: formData.get("startsAt"),
-          endsAt: formData.get("endsAt")
+          startsAt: localDateTimeToIsoString(formData.get("startsAt")),
+          endsAt: localDateTimeToIsoString(formData.get("endsAt"))
         })
       });
       await load();
@@ -54,6 +54,11 @@ export default function EventsPage() {
     } finally {
       setPending(false);
     }
+  }
+
+  function localDateTimeToIsoString(value: FormDataEntryValue | null) {
+    if (typeof value !== "string" || !value) return value;
+    return new Date(value).toISOString();
   }
 
   if (!session) {
