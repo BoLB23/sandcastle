@@ -2,7 +2,7 @@
 
 ## Branch
 
-- `codex/mvp-wave1-foundation`
+- `main`
 
 ## What Changed
 
@@ -30,36 +30,39 @@
 - `env DATABASE_URL=postgresql://sandcastle:sandcastle@localhost:5432/sandcastle corepack pnpm --filter @sandcastle/db exec prisma validate --schema ./prisma/schema.prisma`
 - local YAML parse across `deploy/k8s/*.yaml`
 
-## Current Blocker
+## Current State
 
-- No repo-blocking local validation failure remains.
-- Live cluster work reached the app-secret stage and then hit an image/runtime issue during migrations.
+- Repo validation is green on `main`.
+- GitHub Actions `CI` is green for commit `23978af`.
+- GitHub Actions `Build and Publish Docker Images` is green for commit `23978af`.
+- Live cluster deployment succeeded with immutable tag `v2026.06.24-23978af`.
 - Confirmed live state:
-  - ESO is installed cluster-wide and running
-  - OpenBao is unsealed and Kubernetes auth is already configured
-  - OpenBao currently has a working `paperless` auth role/policy template
-  - CNPG `postgres` cluster is healthy and already manages `paperless`, `authelia`, and `irene_hub`
-  - Sandcastle CNPG role/database exist and the app secret is synced through ESO
-- Remaining unreconciled risk is live integration:
-  - the migration/seed images need a runtime fix for Prisma on Alpine (OpenSSL package missing)
-  - the current deploy tag needs to be rebuilt/published after the Dockerfile fix
-  - two-user browser smoke coverage is not yet automated
+  - Sandcastle CNPG role/database exist
+  - OpenBao contains the Sandcastle app secret
+  - ESO syncs `sandcastle-secrets` in the `sandcastle` namespace
+  - `sandcastle-api`, `sandcastle-realtime`, and `sandcastle-web` are all `1/1 Running`
+  - in-cluster HTTP checks succeeded:
+    - `http://sandcastle-api:4000/healthz` -> `200`
+    - `http://sandcastle-realtime:4001/healthz` -> `200`
+    - `http://sandcastle-web:3000/` -> `307 /channels`
+- Remaining risk is no longer deployment-blocking:
+  - ESO is currently using a scoped OpenBao token secret as a temporary bridge instead of Kubernetes auth
+  - two-user browser smoke coverage is still not automated
 
 ## Exact Resume Steps
 
-1. Rebuild/publish the API and realtime images with the OpenSSL runtime fix.
-2. Redeploy the current immutable tag once the new images are available.
-3. Validate:
+1. Manually verify end-user flows in the live app:
    - owner login
    - invite creation and acceptance
    - channel message persistence plus websocket fanout
    - event create/edit/cancel/RSVP
    - availability save/reload
-4. If promoting this branch, decide whether to keep the current minimal ESLint setup or add full TypeScript ESLint packages in a follow-up.
+2. Replace the temporary token-based ESO auth with cluster-managed Kubernetes auth when the shared OpenBao wiring is ready.
+3. If needed, add browser automation or API integration coverage for the live MVP flows.
 
 ## Known Likely Follow-Up Edits
 
 - add API integration tests around auth, reset links, messaging, and RSVP flows
 - add two-user browser smoke coverage
-- perform live cluster validation for ESO/OpenBao wiring and immutable-tag deployment
+- replace the temporary OpenBao token auth bridge with namespace-scoped Kubernetes auth via shared infra
 - if cluster-level Sandcastle config is kept here temporarily, move the CNPG/OpenBao/ESO bootstrap into `homelab-infra` later

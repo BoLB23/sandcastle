@@ -6,6 +6,7 @@ These are cluster-level items that should live in `homelab-infra` long term rath
 
 - Install or upgrade External Secrets Operator cluster-wide.
 - Create the Sandcastle OpenBao policy, role, and Kubernetes auth bootstrap as infra-managed config.
+- Replace the temporary `sandcastle-openbao-token` SecretStore bridge with namespace-scoped Kubernetes auth once the cluster-side auth path is fixed.
 - Decide whether the OpenBao auth mount should stay at `kubernetes` or be standardized across namespaces.
 - Decide whether the Sandcastle secret path should remain `secret/sandcastle/app` or move to a dedicated environment namespace/path convention.
 - Mirror the Sandcastle app secret keys into OpenBao at `secret/sandcastle/app` and keep the generated DB password out of the app repo.
