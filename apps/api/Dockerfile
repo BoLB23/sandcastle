@@ -26,6 +26,7 @@ RUN src="$(find /app/node_modules/.pnpm -path '*/@prisma+client@*/node_modules/.
 FROM node:22-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
+RUN apk add --no-cache openssl
 COPY --from=build /prod/api /app
 EXPOSE 4000
 CMD ["node", "dist/server.js"]

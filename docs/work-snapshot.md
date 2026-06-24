@@ -33,24 +33,33 @@
 ## Current Blocker
 
 - No repo-blocking local validation failure remains.
+- Live cluster work reached the app-secret stage and then hit an image/runtime issue during migrations.
+- Confirmed live state:
+  - ESO is installed cluster-wide and running
+  - OpenBao is unsealed and Kubernetes auth is already configured
+  - OpenBao currently has a working `paperless` auth role/policy template
+  - CNPG `postgres` cluster is healthy and already manages `paperless`, `authelia`, and `irene_hub`
+  - Sandcastle CNPG role/database exist and the app secret is synced through ESO
 - Remaining unreconciled risk is live integration:
-  - API integration coverage is still thin
+  - the migration/seed images need a runtime fix for Prisma on Alpine (OpenSSL package missing)
+  - the current deploy tag needs to be rebuilt/published after the Dockerfile fix
   - two-user browser smoke coverage is not yet automated
-  - cluster-backed manifest validation/apply still needs a live Kubernetes connection
 
 ## Exact Resume Steps
 
-1. Run live homelab deployment from this branch or a cleaned follow-up branch.
-2. Validate:
+1. Rebuild/publish the API and realtime images with the OpenSSL runtime fix.
+2. Redeploy the current immutable tag once the new images are available.
+3. Validate:
    - owner login
    - invite creation and acceptance
    - channel message persistence plus websocket fanout
    - event create/edit/cancel/RSVP
    - availability save/reload
-3. If promoting this branch, decide whether to keep the current minimal ESLint setup or add full TypeScript ESLint packages in a follow-up.
+4. If promoting this branch, decide whether to keep the current minimal ESLint setup or add full TypeScript ESLint packages in a follow-up.
 
 ## Known Likely Follow-Up Edits
 
 - add API integration tests around auth, reset links, messaging, and RSVP flows
 - add two-user browser smoke coverage
 - perform live cluster validation for ESO/OpenBao wiring and immutable-tag deployment
+- if cluster-level Sandcastle config is kept here temporarily, move the CNPG/OpenBao/ESO bootstrap into `homelab-infra` later
