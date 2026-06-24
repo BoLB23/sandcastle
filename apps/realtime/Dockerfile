@@ -25,6 +25,6 @@ WORKDIR /app
 ENV NODE_ENV=production
 RUN apk add --no-cache openssl
 COPY --from=build --chown=node:node /prod/realtime /app
-USER node
+USER 1000:1000
 EXPOSE 4001
 CMD ["node", "dist/server.js"]
