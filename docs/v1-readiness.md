@@ -24,6 +24,6 @@ ruby -e 'require "yaml"; Dir["deploy/k8s/*.yaml"].sort.each { |f| YAML.load_stre
 
 ## Known Gaps
 
-- API integration and two-user browser tests still need to be expanded
+- Local API, web URL-resolution, and realtime fanout regression coverage exists; served-app two-user browser automation still needs to be added
 - ESO installation itself is not bundled here; only namespace-scoped Sandcastle integration is included
 - full Kubernetes apply or API-backed dry-run still requires live cluster access outside this sandbox

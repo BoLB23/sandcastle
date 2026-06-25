@@ -47,6 +47,7 @@ const availabilityHours = ["19", "20", "21", "22"] as const;
 const createMessageBodySchema = z.object({
   body: z.string().min(1).max(4000)
 });
+const rsvpBodySchema = rsvpSchema.omit({ eventId: true });
 
 type MessageRecord = Awaited<ReturnType<typeof prisma.message.findFirstOrThrow>>;
 
@@ -488,7 +489,7 @@ export async function buildApp() {
   app.post("/events/:id/rsvp", async (request, reply) => {
     const user = requirePermission(request, reply, "rsvps.manage");
     const { id } = request.params as { id: string };
-    const body = rsvpSchema.parse(request.body);
+    const body = rsvpBodySchema.parse(request.body);
 
     return prisma.rsvp.upsert({
       where: { eventId_userId: { eventId: id, userId: user.id } },

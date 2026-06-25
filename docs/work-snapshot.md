@@ -19,6 +19,7 @@
 - Added admin-generated reset-link flow and hashed token handling for sessions, invites, and reset tokens
 - Replaced the prototype web shell with real login, invite, reset, channels, events, and availability routes
 - Updated deploy docs/manifests toward lowercase GHCR refs, immutable tags, and namespace-scoped ESO/OpenBao integration
+- Added local regression coverage for API auth/invite/reset/message/RSVP flows, web API/realtime URL resolution, and realtime fanout subscription behavior
 
 ## What Passed
 
@@ -47,7 +48,7 @@
     - `http://sandcastle-web:3000/` -> `307 /channels`
 - Remaining risk is no longer deployment-blocking:
   - ESO is currently using a scoped OpenBao token secret as a temporary bridge instead of Kubernetes auth
-  - two-user browser smoke coverage is still not automated
+  - browser-level two-user smoke coverage is still not automated against a live or locally served app
 
 ## Exact Resume Steps
 
@@ -58,11 +59,11 @@
    - event create/edit/cancel/RSVP
    - availability save/reload
 2. Replace the temporary token-based ESO auth with cluster-managed Kubernetes auth when the shared OpenBao wiring is ready.
-3. If needed, add browser automation or API integration coverage for the live MVP flows.
+3. If needed, add browser automation against a served app for the live MVP flows.
 
 ## Known Likely Follow-Up Edits
 
-- add API integration tests around auth, reset links, messaging, and RSVP flows
-- add two-user browser smoke coverage
+- add served-app two-user browser smoke coverage
+- expand API integration tests further if database-backed test infrastructure is added
 - replace the temporary OpenBao token auth bridge with namespace-scoped Kubernetes auth via shared infra
 - if cluster-level Sandcastle config is kept here temporarily, move the CNPG/OpenBao/ESO bootstrap into `homelab-infra` later

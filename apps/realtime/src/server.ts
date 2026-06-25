@@ -7,15 +7,28 @@ import { realtimeEnvelopeSchema, type RealtimeEnvelope, type RealtimeTopic } fro
 import { env } from "./env";
 import crypto from "node:crypto";
 
+type ClientCommand = {
+  type?: string;
+  topic?: RealtimeTopic;
+  resourceId?: string;
+};
+
 type Client = {
   socket: WebSocket;
   userId: string;
   subscriptions: Set<string>;
 };
 
+type FanoutClient = {
+  subscriptions: Set<string>;
+  isOpen: boolean;
+  send(raw: string): void;
+};
+
 const clients = new Map<WebSocket, Client>();
 const publisher = createRedisClient("publisher");
 const subscriber = createRedisClient("subscriber");
+const isVitest = process.env.VITEST === "true";
 
 const server = http.createServer((request, response) => {
   if (request.url === "/healthz") {
@@ -29,57 +42,49 @@ const server = http.createServer((request, response) => {
 
 const wss = new WebSocketServer({ server, path: "/ws" });
 
-await connectRedis();
-subscriber.on("message", (_channel: string, raw: string) => {
-  const parsed = realtimeEnvelopeSchema.safeParse(JSON.parse(raw));
-  if (!parsed.success) return;
-  fanout(parsed.data);
-});
-
-wss.on("connection", async (socket, request) => {
-  const urlToken = new URL(request.url ?? "", "http://localhost").searchParams.get("token");
-  const token = getCookie(request.headers.cookie, "session") ?? urlToken;
-  const session = token
-    ? await prisma.session.findUnique({ where: { token: hashToken(token) }, include: { user: true } })
-    : null;
-
-  if (!session || session.expiresAt < new Date()) {
-    socket.close(1008, "unauthorized");
-    return;
-  }
-
-  const client: Client = { socket, userId: session.userId, subscriptions: new Set() };
-  clients.set(socket, client);
-  void publish("presence", "user.online", session.userId, session.userId, {
-    userId: session.userId,
-    displayName: session.user.displayName
-  });
-
-  socket.on("message", (raw) => handleClientMessage(client, raw.toString()));
-  socket.on("close", () => {
-    clients.delete(socket);
-    void publish("presence", "user.offline", session.userId, session.userId, { userId: session.userId });
-  });
-});
-
 function handleClientMessage(client: Client, raw: string) {
-  const message = JSON.parse(raw) as { type?: string; topic?: RealtimeTopic; resourceId?: string };
-  if (message.type === "subscribe" && message.topic && message.resourceId) {
-    client.subscriptions.add(`${message.topic}:${message.resourceId}`);
-    client.socket.send(JSON.stringify({ type: "subscribed", topic: message.topic, resourceId: message.resourceId }));
-  }
-  if (message.type === "unsubscribe" && message.topic && message.resourceId) {
-    client.subscriptions.delete(`${message.topic}:${message.resourceId}`);
+  const acknowledgement = applySubscriptionMessage(client.subscriptions, raw);
+  if (acknowledgement) {
+    client.socket.send(JSON.stringify(acknowledgement));
   }
 }
 
 function fanout(envelope: RealtimeEnvelope) {
-  const key = `${envelope.topic}:${envelope.resourceId}`;
-  for (const client of clients.values()) {
-    const shouldSend =
-      client.subscriptions.has(key) || envelope.topic === "presence";
-    if (shouldSend && client.socket.readyState === client.socket.OPEN) {
-      client.socket.send(JSON.stringify(envelope));
+  fanoutToClients(
+    Array.from(clients.values(), (client) => ({
+      subscriptions: client.subscriptions,
+      isOpen: client.socket.readyState === client.socket.OPEN,
+      send(raw: string) {
+        client.socket.send(raw);
+      }
+    })),
+    envelope
+  );
+}
+
+export function subscriptionKey(topic: RealtimeTopic, resourceId: string) {
+  return `${topic}:${resourceId}`;
+}
+
+export function applySubscriptionMessage(subscriptions: Set<string>, raw: string) {
+  const message = JSON.parse(raw) as ClientCommand;
+  if (message.type === "subscribe" && message.topic && message.resourceId) {
+    subscriptions.add(subscriptionKey(message.topic, message.resourceId));
+    return { type: "subscribed" as const, topic: message.topic, resourceId: message.resourceId };
+  }
+  if (message.type === "unsubscribe" && message.topic && message.resourceId) {
+    subscriptions.delete(subscriptionKey(message.topic, message.resourceId));
+  }
+  return null;
+}
+
+export function fanoutToClients(clients: Iterable<FanoutClient>, envelope: RealtimeEnvelope) {
+  const key = subscriptionKey(envelope.topic, envelope.resourceId);
+  const serialized = JSON.stringify(envelope);
+  for (const client of clients) {
+    const shouldSend = client.subscriptions.has(key) || envelope.topic === "presence";
+    if (shouldSend && client.isOpen) {
+      client.send(serialized);
     }
   }
 }
@@ -96,10 +101,6 @@ export async function publish(topic: RealtimeTopic, action: string, resourceId: 
   };
   await publisher.publish("sandcastle:events", JSON.stringify(envelope));
 }
-
-server.listen(env.REALTIME_PORT, "0.0.0.0", () => {
-  console.log(`realtime listening on ${env.REALTIME_PORT}`);
-});
 
 function createRedisClient(name: string) {
   const client = new Redis(env.REDIS_URL, {
@@ -139,4 +140,47 @@ function getCookie(header: string | undefined, name: string) {
 
 function hashToken(token: string) {
   return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+async function startServer() {
+  await connectRedis();
+  subscriber.on("message", (_channel: string, raw: string) => {
+    const parsed = realtimeEnvelopeSchema.safeParse(JSON.parse(raw));
+    if (!parsed.success) return;
+    fanout(parsed.data);
+  });
+
+  wss.on("connection", async (socket, request) => {
+    const urlToken = new URL(request.url ?? "", "http://localhost").searchParams.get("token");
+    const token = getCookie(request.headers.cookie, "session") ?? urlToken;
+    const session = token
+      ? await prisma.session.findUnique({ where: { token: hashToken(token) }, include: { user: true } })
+      : null;
+
+    if (!session || session.expiresAt < new Date()) {
+      socket.close(1008, "unauthorized");
+      return;
+    }
+
+    const client: Client = { socket, userId: session.userId, subscriptions: new Set() };
+    clients.set(socket, client);
+    void publish("presence", "user.online", session.userId, session.userId, {
+      userId: session.userId,
+      displayName: session.user.displayName
+    });
+
+    socket.on("message", (raw) => handleClientMessage(client, raw.toString()));
+    socket.on("close", () => {
+      clients.delete(socket);
+      void publish("presence", "user.offline", session.userId, session.userId, { userId: session.userId });
+    });
+  });
+
+  server.listen(env.REALTIME_PORT, "0.0.0.0", () => {
+    console.log(`realtime listening on ${env.REALTIME_PORT}`);
+  });
+}
+
+if (!isVitest) {
+  await startServer();
 }
