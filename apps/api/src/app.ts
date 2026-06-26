@@ -89,6 +89,10 @@ export async function buildApp() {
 
   app.get("/healthz", async () => ({ ok: true, service: "api" }));
 
+  app.get("/meta", async () => ({
+    deployedImageTag: env.DEPLOYED_IMAGE_TAG
+  }));
+
   app.post("/auth/login", async (request, reply) => {
     const body = loginSchema.parse(request.body);
     const ok = await createPasswordSession(reply, body.email, body.password);

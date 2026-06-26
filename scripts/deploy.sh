@@ -42,12 +42,14 @@ render_manifest() {
     -e "s#ghcr.io/bolb23/the-sandcastle-web:latest#${repo_prefix}-web:${image_tag}#g" \
     -e "s#ghcr.io/bolb23/the-sandcastle-api:latest#${repo_prefix}-api:${image_tag}#g" \
     -e "s#ghcr.io/bolb23/the-sandcastle-realtime:latest#${repo_prefix}-realtime:${image_tag}#g" \
+    -e "s#__SANDCASTLE_IMAGE_TAG__#${image_tag}#g" \
     "$src" > "$dst"
 }
 
 echo "Applying base infrastructure to namespace ${namespace}"
 kubectl apply -f deploy/k8s/namespace.yaml
-kubectl apply -f deploy/k8s/configmap.yaml
+render_manifest deploy/k8s/configmap.yaml "${tmpdir}/configmap.yaml"
+kubectl apply -f "${tmpdir}/configmap.yaml"
 
 if [[ -f deploy/k8s/secret.yaml ]]; then
   kubectl apply -f deploy/k8s/secret.yaml

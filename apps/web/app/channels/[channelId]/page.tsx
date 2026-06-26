@@ -53,8 +53,9 @@ export default function ChannelPage({ params }: { params: Promise<{ channelId: s
     });
     socket.addEventListener("message", (event) => {
       const envelope = JSON.parse(event.data) as { action?: string; payload?: { message?: Message } };
-      if (envelope.action === "message.created" && envelope.payload?.message) {
-        setMessages((current) => [...current, envelope.payload!.message!]);
+      const incomingMessage = envelope.payload?.message;
+      if (envelope.action === "message.created" && incomingMessage) {
+        setMessages((current) => [...current, incomingMessage]);
       }
     });
     return () => {
@@ -94,66 +95,188 @@ export default function ChannelPage({ params }: { params: Promise<{ channelId: s
     }
   }
 
+  const currentChannel = channels.find((channel) => channel.id === channelId);
+  const messagesByDay = groupMessagesByDay(messages);
+
   if (!session) {
     return <main className="p-8 text-slate-200">{error ?? "Loading channel..."}</main>;
   }
 
-  const currentChannel = channels.find((channel) => channel.id === channelId);
-
   return (
     <WorkspaceShell user={session.user} active="channels">
-      <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-        <aside className="rounded-3xl border border-slate-800 bg-slate-950/80 p-4">
-          <div className="mb-3 text-sm uppercase tracking-[0.14em] text-slate-400">Channels</div>
+      <div className="grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
+        <aside className="rounded-lg border border-slate-800 bg-slate-950/80 p-4 lg:sticky lg:top-6 lg:self-start">
+          <div className="mb-4 flex items-end justify-between gap-3 border-b border-slate-800 pb-4">
+            <div>
+              <div className="text-xs uppercase tracking-[0.14em] text-slate-400">Channels</div>
+              <div className="mt-1 text-lg font-semibold text-slate-100">Workspace rooms</div>
+            </div>
+            <span className="rounded-full border border-slate-700 px-2.5 py-1 text-[11px] uppercase tracking-[0.14em] text-slate-400">
+              {channels.length}
+            </span>
+          </div>
           <div className="space-y-2">
-            {channels.map((channel) => (
-              <Link
-                key={channel.id}
-                href={`/channels/${channel.id}`}
-                className={`block rounded-2xl px-4 py-3 ${
-                  channel.id === channelId ? "bg-amber-300 text-slate-950" : "bg-slate-900 text-slate-300"
-                }`}
-              >
-                <div className="font-medium">#{channel.name}</div>
-                <div className="text-xs opacity-80">{channel.topic ?? "No topic set"}</div>
-              </Link>
-            ))}
+            {channels.map((channel) => {
+              const isActive = channel.id === channelId;
+              return (
+                <Link
+                  key={channel.id}
+                  href={`/channels/${channel.id}`}
+                  className={`block rounded-lg border px-4 py-3 transition ${
+                    isActive
+                      ? "border-amber-300/50 bg-amber-300/10 text-slate-100 shadow-[0_0_0_1px_rgba(252,211,77,0.15)]"
+                      : "border-slate-800 bg-slate-900/70 text-slate-300 hover:border-slate-700 hover:bg-slate-900"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="truncate font-medium">#{channel.name}</div>
+                    {channel.isDefault ? (
+                      <span className="rounded-full border border-slate-700 px-2 py-0.5 text-[11px] uppercase tracking-[0.14em] text-slate-400">
+                        Default
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="mt-1 truncate text-sm text-slate-400">
+                    {channel.topic ?? "No topic set"}
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </aside>
-        <section className="rounded-3xl border border-slate-800 bg-slate-950/80 p-4">
-          <div className="mb-4 border-b border-slate-800 pb-4">
-            <h2 className="text-2xl font-semibold">#{currentChannel?.name ?? "Channel"}</h2>
-            <p className="mt-1 text-sm text-slate-400">{currentChannel?.topic ?? "Private group conversation"}</p>
-          </div>
-          {nextCursor ? (
-            <button className="mb-4 rounded-full border border-slate-700 px-4 py-2 text-sm text-slate-300" onClick={() => void loadOlder()} type="button">
-              Load older messages
-            </button>
-          ) : null}
-          <div className="space-y-3">
-            {messages.map((message) => (
-              <article key={message.id} className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium text-slate-100">{message.author?.displayName ?? "Member"}</span>
-                  <span className="text-slate-500">{new Date(message.createdAt).toLocaleString()}</span>
+
+        <section className="rounded-lg border border-slate-800 bg-slate-950/80">
+          <div className="border-b border-slate-800 px-5 py-5 sm:px-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-2xl font-semibold text-slate-100">#{currentChannel?.name ?? "Channel"}</h2>
+                  {currentChannel?.isDefault ? (
+                    <span className="rounded-full bg-amber-300 px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-slate-950">
+                      Default
+                    </span>
+                  ) : null}
                 </div>
-                <p className="mt-2 whitespace-pre-wrap text-slate-300">{message.body}</p>
-              </article>
-            ))}
+                <p className="mt-2 max-w-2xl text-sm text-slate-400">
+                  {currentChannel?.topic ?? "Private group conversation"}
+                </p>
+              </div>
+              <div className="rounded-lg border border-slate-800 bg-slate-900/70 px-4 py-3 text-right">
+                <div className="text-lg font-semibold text-slate-100">{messages.length}</div>
+                <div className="text-xs uppercase tracking-[0.14em] text-slate-400">Messages loaded</div>
+              </div>
+            </div>
           </div>
-          <form className="mt-4 space-y-3" onSubmit={onSubmit}>
-            <textarea
-              className="min-h-28 w-full rounded-2xl border border-slate-800 bg-slate-900 px-4 py-3 text-slate-100 placeholder:text-slate-500"
-              name="body"
-              placeholder="Write to the group..."
-            />
-            {error ? <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">{error}</div> : null}
-            <button className="rounded-2xl bg-amber-300 px-4 py-3 font-medium text-slate-950" type="submit" disabled={pending}>
-              {pending ? "Sending..." : "Send message"}
-            </button>
-          </form>
+
+          <div className="px-5 py-5 sm:px-6">
+            {nextCursor ? (
+              <button
+                className="mb-5 rounded-full border border-slate-700 bg-slate-900/70 px-4 py-2 text-sm font-medium text-slate-300 transition hover:border-slate-600 hover:text-slate-100"
+                onClick={() => void loadOlder()}
+                type="button"
+              >
+                Load older messages
+              </button>
+            ) : null}
+
+            {messages.length ? (
+              <div className="space-y-6">
+                {messagesByDay.map(([dateLabel, dayMessages]) => (
+                  <div key={dateLabel}>
+                    <div className="mb-3 flex items-center gap-3">
+                      <div className="h-px flex-1 bg-slate-800" />
+                      <span className="text-xs uppercase tracking-[0.14em] text-slate-500">{dateLabel}</span>
+                      <div className="h-px flex-1 bg-slate-800" />
+                    </div>
+                    <div className="space-y-3">
+                      {dayMessages.map((message) => {
+                        const isSelf = message.authorId === session.user.id;
+                        return (
+                          <article
+                            key={message.id}
+                            className={`flex ${isSelf ? "justify-end" : "justify-start"}`}
+                          >
+                            <div
+                              className={`max-w-[min(100%,44rem)] rounded-[24px] border px-4 py-3 shadow-sm sm:px-5 ${
+                                isSelf
+                                  ? "border-amber-300/40 bg-amber-300/10 text-slate-100"
+                                  : "border-slate-800 bg-slate-900/85 text-slate-100"
+                              }`}
+                            >
+                              <div className="mb-1 flex items-center justify-between gap-4 text-xs">
+                                <span className={`font-medium ${isSelf ? "text-amber-100" : "text-slate-300"}`}>
+                                  {isSelf ? "You" : message.author?.displayName ?? "Member"}
+                                </span>
+                                <span className={isSelf ? "text-amber-100/80" : "text-slate-500"}>
+                                  {new Date(message.createdAt).toLocaleTimeString([], {
+                                    hour: "numeric",
+                                    minute: "2-digit"
+                                  })}
+                                </span>
+                              </div>
+                              <p className="whitespace-pre-wrap break-words text-sm leading-6 text-inherit sm:text-[15px]">
+                                {message.body}
+                              </p>
+                            </div>
+                          </article>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-lg border border-dashed border-slate-700 bg-slate-900/40 px-6 py-12 text-center">
+                <p className="text-lg font-medium text-slate-100">No messages yet</p>
+                <p className="mt-2 text-sm text-slate-400">Start the conversation in this room.</p>
+              </div>
+            )}
+
+            <form className="mt-6 rounded-lg border border-slate-800 bg-slate-900/60 p-4 sm:p-5" onSubmit={onSubmit}>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="text-sm font-medium text-slate-100">New message</div>
+                <div className="text-xs uppercase tracking-[0.14em] text-slate-500">Live</div>
+              </div>
+              <textarea
+                className="min-h-28 w-full rounded-lg border border-slate-800 bg-slate-950 px-4 py-3 text-slate-100 placeholder:text-slate-500 focus:border-slate-700 focus:outline-none"
+                name="body"
+                placeholder="Write to the group..."
+              />
+              <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                {error ? (
+                  <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+                    {error}
+                  </div>
+                ) : (
+                  <div className="text-sm text-slate-500"> </div>
+                )}
+                <button
+                  className="rounded-lg bg-amber-300 px-5 py-3 font-medium text-slate-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-70"
+                  type="submit"
+                  disabled={pending}
+                >
+                  {pending ? "Sending..." : "Send message"}
+                </button>
+              </div>
+            </form>
+          </div>
         </section>
       </div>
     </WorkspaceShell>
   );
+}
+
+function groupMessagesByDay(messages: Message[]) {
+  const grouped = new Map<string, Message[]>();
+  for (const message of messages) {
+    const label = new Date(message.createdAt).toLocaleDateString([], {
+      weekday: "short",
+      month: "short",
+      day: "numeric"
+    });
+    const current = grouped.get(label);
+    if (current) current.push(message);
+    else grouped.set(label, [message]);
+  }
+  return Array.from(grouped.entries());
 }

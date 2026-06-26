@@ -51,7 +51,7 @@ Apply secrets using either ESO or a direct secret manifest, then deploy with an 
 scripts/deploy.sh v2026.06.20-e7ce85d
 ```
 
-The deploy script refuses `latest`, reruns migrations and seed, then rolls the workloads.
+The deploy script refuses `latest`, renders the `DEPLOYED_IMAGE_TAG` ConfigMap value from the tag argument, reruns migrations and seed, then rolls the workloads. The app exposes that value in the authenticated workspace header.
 
 ## Validation
 

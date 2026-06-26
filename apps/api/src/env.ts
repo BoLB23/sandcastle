@@ -8,7 +8,8 @@ const envSchema = z.object({
   API_PORT: z.coerce.number().int().default(4000),
   AUTH_SECRET: z.string().min(16).default(DEFAULT_AUTH_SECRET),
   PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
-  REDIS_URL: z.string().default(DEFAULT_REDIS_URL)
+  REDIS_URL: z.string().default(DEFAULT_REDIS_URL),
+  DEPLOYED_IMAGE_TAG: z.string().default("local")
 });
 
 export const env = envSchema.parse(process.env);

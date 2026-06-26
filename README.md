@@ -41,4 +41,5 @@ The production manifests assume:
 
 - [Architecture](docs/architecture.md)
 - [Deployment](docs/deploy.md)
+- [Next phase feature plan](docs/next-phase-feature-plan.md)
 - [V1 readiness checklist](docs/v1-readiness.md)

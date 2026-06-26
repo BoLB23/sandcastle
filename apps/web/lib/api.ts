@@ -63,6 +63,10 @@ export type SessionResponse = {
   } | null;
 };
 
+export type MetaResponse = {
+  deployedImageTag: string;
+};
+
 export type Channel = {
   id: string;
   name: string;

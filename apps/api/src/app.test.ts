@@ -240,6 +240,20 @@ describe("buildApp", () => {
     await app.close();
   });
 
+  it("exposes the deployed image tag metadata", async () => {
+    const app = await createApp();
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/meta"
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({ deployedImageTag: "local" });
+
+    await app.close();
+  });
+
   it("creates channel messages from the route id and body payload", async () => {
     const message = {
       id: "cm00000000000000000000003",

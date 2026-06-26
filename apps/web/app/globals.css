@@ -4,23 +4,40 @@
 
 :root {
   color-scheme: dark;
-  background: #071019;
-  color: #d7e4f2;
+  background: #0b1117;
+  color: #e6eef7;
+}
+
+html {
+  background: #0b1117;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(circle at top, rgba(243, 196, 106, 0.12), transparent 32%),
-    linear-gradient(180deg, #071019, #08131e);
-  color: #d7e4f2;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 18%),
+    linear-gradient(180deg, #0b1117 0%, #0d151d 56%, #111b25 100%);
+  color: #e6eef7;
   font-family:
-    "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    Inter, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgba(244, 193, 94, 0.24);
+  color: #fff7ea;
 }
 
 * {
   box-sizing: border-box;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
 }
 
 button,
@@ -28,4 +45,25 @@ input,
 textarea,
 select {
   font: inherit;
+}
+
+button:not(:disabled),
+input,
+textarea,
+select {
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+::placeholder {
+  color: #8fa2b7;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(244, 193, 94, 0.72);
+  outline-offset: 2px;
 }
