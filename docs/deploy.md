@@ -6,7 +6,7 @@ Sandcastle is deployed as three images in one namespace: `web`, `api`, and `real
 
 - DNS for `sandcastle.lab.bolblab.org`
 - ingress class `nginx`
-- cert-manager `ClusterIssuer` named `letsencrypt-production`
+- cert-manager `ClusterIssuer` named `bolblab-cf-issuer`
 - a Postgres database reachable from `postgres-rw.postgres.svc.cluster.local:5432`
 - published immutable GHCR tags for:
   - `ghcr.io/bolb23/the-sandcastle-web:<tag>`

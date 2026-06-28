@@ -4,7 +4,7 @@ metadata:
   name: sandcastle-web
   namespace: sandcastle
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-production
+    cert-manager.io/cluster-issuer: bolblab-cf-issuer
 spec:
   ingressClassName: nginx
   tls:
