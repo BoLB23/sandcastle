@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch, type EventRecord, type SessionResponse } from "../../../lib/api";
 import { WorkspaceShell } from "../../../components/workspace-shell";
+import { Badge, Button, Card, CardBody, CardHeader, EmptyState } from "../../../components/ui";
 
 type RsvpStatus = "going" | "maybe" | "not_going";
 
@@ -85,159 +86,149 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
   const rsvpSummary = eventRecord ? summarizeRsvps(eventRecord) : { going: 0, maybe: 0, not_going: 0 };
 
   if (!session || !eventRecord) {
-    return <main className="p-8 text-slate-200">{error ?? "Loading event..."}</main>;
+    return <main className="p-8 text-ink-muted">{error ?? "Loading event..."}</main>;
   }
 
   return (
     <WorkspaceShell user={session.user} active="events">
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <section className="rounded-lg border border-slate-800 bg-slate-950/80 p-6">
-          <div className="flex flex-col gap-4 border-b border-slate-800 pb-5">
+        <Card>
+          <CardHeader className="flex flex-col gap-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-3xl font-semibold text-slate-100">{eventRecord.title}</h2>
-                  <span className={statusChipClass(eventRecord.status)}>{eventRecord.status}</span>
+                  <h2 className="text-xl font-semibold text-ink">{eventRecord.title}</h2>
+                  <Badge tone={eventRecord.status === "cancelled" ? "danger" : "success"}>{eventRecord.status}</Badge>
                 </div>
-                <p className="mt-2 max-w-3xl text-sm text-slate-400">
-                  {eventRecord.description ?? "No description"}
-                </p>
+                <p className="mt-1.5 max-w-3xl text-sm text-ink-muted">{eventRecord.description ?? "No description"}</p>
               </div>
-              <div className="rounded-lg border border-slate-800 bg-slate-900/70 px-4 py-3 text-right">
-                <div className="text-sm text-slate-400">Organizer</div>
-                <div className="mt-1 font-medium text-slate-100">
+              <div className="text-right">
+                <div className="text-xs text-ink-subtle">Organizer</div>
+                <div className="mt-0.5 text-sm font-medium text-ink">
                   {eventRecord.organizer?.displayName ?? "Group member"}
                 </div>
               </div>
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <span className="rounded-full border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-sm text-slate-300">
+              <span className="rounded-full border border-border-strong px-3 py-1 text-sm text-ink-muted">
                 {new Date(eventRecord.startsAt).toLocaleDateString([], {
                   weekday: "long",
                   month: "short",
                   day: "numeric"
                 })}
               </span>
-              <span className="rounded-full border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-sm text-slate-300">
+              <span className="rounded-full border border-border-strong px-3 py-1 text-sm text-ink-muted">
                 {formatEventWindow(eventRecord.startsAt, eventRecord.endsAt)}
               </span>
             </div>
-          </div>
+          </CardHeader>
 
-          <div className="mt-5 flex flex-wrap gap-3">
-            {([
-              ["going", "Going"],
-              ["maybe", "Maybe"],
-              ["not_going", "Not going"]
-            ] as const).map(([status, label]) => {
-              const isActive = currentRsvp === status;
-              const isPending = rsvpPending === status;
-              return (
-                <button
-                  key={status}
-                  className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-                    isActive
-                      ? "border-amber-300 bg-amber-300 text-slate-950"
-                      : "border-slate-700 bg-slate-900/70 text-slate-200 hover:border-slate-600"
-                  }`}
-                  type="button"
-                  onClick={() => void submitRsvp(status)}
-                  disabled={Boolean(rsvpPending)}
-                >
-                  {isPending ? "Saving..." : label}
-                </button>
-              );
-            })}
-          </div>
+          <CardBody>
+            <div className="flex flex-wrap gap-2">
+              {([
+                ["going", "Going"],
+                ["maybe", "Maybe"],
+                ["not_going", "Not going"]
+              ] as const).map(([status, label]) => {
+                const isActive = currentRsvp === status;
+                const isPending = rsvpPending === status;
+                return (
+                  <Button
+                    key={status}
+                    variant={isActive ? "primary" : "secondary"}
+                    onClick={() => void submitRsvp(status)}
+                    disabled={Boolean(rsvpPending)}
+                  >
+                    {isPending ? "Saving..." : label}
+                  </Button>
+                );
+              })}
+            </div>
 
-          {error ? <div className="mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">{error}</div> : null}
+            {error ? <p className="mt-4 text-sm text-rose-300">{error}</p> : null}
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            {([
-              ["going", "Going"],
-              ["maybe", "Maybe"],
-              ["not_going", "Not going"]
-            ] as const).map(([key, label]) => (
-              <div key={key} className="rounded-lg border border-slate-800 bg-slate-900/70 px-4 py-4">
-                <div className="text-xs uppercase tracking-[0.14em] text-slate-500">{label}</div>
-                <div className="mt-2 text-2xl font-semibold text-slate-100">{rsvpSummary[key]}</div>
-              </div>
-            ))}
-          </div>
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              {([
+                ["going", "Going"],
+                ["maybe", "Maybe"],
+                ["not_going", "Not going"]
+              ] as const).map(([key, label]) => (
+                <div key={key} className="rounded-md border border-border bg-surface-raised px-4 py-3">
+                  <div className="text-xs uppercase tracking-[0.08em] text-ink-subtle">{label}</div>
+                  <div className="mt-1.5 text-xl font-semibold text-ink">{rsvpSummary[key]}</div>
+                </div>
+              ))}
+            </div>
 
-          <div className="mt-8">
-            <h3 className="text-lg font-semibold text-slate-100">RSVPs</h3>
-            {eventRecord.rsvps?.length ? (
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                {eventRecord.rsvps.map((rsvp) => (
-                  <div key={rsvp.userId} className="rounded-lg border border-slate-800 bg-slate-900/80 px-4 py-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="font-medium text-slate-100">{rsvp.user.displayName}</span>
-                      <span className={rsvpChipClass(rsvp.status)}>{formatRsvpLabel(rsvp.status)}</span>
+            <div className="mt-8">
+              <h3 className="text-sm font-semibold text-ink">RSVPs</h3>
+              {eventRecord.rsvps?.length ? (
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  {eventRecord.rsvps.map((rsvp) => (
+                    <div key={rsvp.userId} className="rounded-md border border-border bg-surface-raised px-4 py-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-sm font-medium text-ink">{rsvp.user.displayName}</span>
+                        <Badge tone={rsvpTone(rsvp.status)}>{formatRsvpLabel(rsvp.status)}</Badge>
+                      </div>
+                      {rsvp.note ? <p className="mt-1.5 text-sm text-ink-muted">{rsvp.note}</p> : null}
+                      <p className="mt-1.5 text-xs text-ink-subtle">Updated {new Date(rsvp.updatedAt).toLocaleString()}</p>
                     </div>
-                    {rsvp.note ? <p className="mt-2 text-sm text-slate-400">{rsvp.note}</p> : null}
-                    <p className="mt-2 text-xs text-slate-500">
-                      Updated {new Date(rsvp.updatedAt).toLocaleString()}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="mt-3 rounded-lg border border-dashed border-slate-700 bg-slate-900/40 px-6 py-10 text-center">
-                <p className="text-lg font-medium text-slate-100">No RSVPs yet</p>
-                <p className="mt-2 text-sm text-slate-400">Responses will show up here as people answer.</p>
-              </div>
-            )}
-          </div>
-        </section>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-3">
+                  <EmptyState title="No RSVPs yet" description="Responses will show up here as people answer." />
+                </div>
+              )}
+            </div>
+          </CardBody>
+        </Card>
 
         {canManage ? (
-          <form className="rounded-lg border border-slate-800 bg-slate-950/80 p-5 xl:sticky xl:top-6 xl:self-start" onSubmit={onUpdate}>
-            <div className="border-b border-slate-800 pb-4">
-              <h3 className="text-xl font-semibold text-slate-100">Manage event</h3>
-              <p className="mt-2 text-sm text-slate-400">Keep the plan current for the group.</p>
-            </div>
-            <div className="mt-4 space-y-3">
-              <input
-                className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-3 text-slate-100 focus:border-slate-700 focus:outline-none"
-                name="title"
-                defaultValue={eventRecord.title}
-              />
-              <textarea
-                className="min-h-24 w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-3 text-slate-100 focus:border-slate-700 focus:outline-none"
-                name="description"
-                defaultValue={eventRecord.description ?? ""}
-              />
-              <input
-                className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-3 text-slate-100 focus:border-slate-700 focus:outline-none"
-                type="datetime-local"
-                name="startsAt"
-                defaultValue={toDateTimeLocal(eventRecord.startsAt)}
-              />
-              <input
-                className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-3 text-slate-100 focus:border-slate-700 focus:outline-none"
-                type="datetime-local"
-                name="endsAt"
-                defaultValue={toDateTimeLocal(eventRecord.endsAt)}
-              />
-              <select
-                className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-3 text-slate-100 focus:border-slate-700 focus:outline-none"
-                name="status"
-                defaultValue={eventRecord.status}
-              >
-                <option value="scheduled">Scheduled</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-              <button
-                className="w-full rounded-lg bg-amber-300 px-4 py-3 font-medium text-slate-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-70"
-                type="submit"
-                disabled={savePending}
-              >
-                {savePending ? "Saving..." : "Save changes"}
-              </button>
-            </div>
-          </form>
+          <Card className="xl:sticky xl:top-6 xl:self-start">
+            <form onSubmit={onUpdate}>
+              <CardHeader>
+                <h3 className="text-base font-semibold text-ink">Manage event</h3>
+                <p className="mt-1.5 text-sm text-ink-muted">Keep the plan current for the group.</p>
+              </CardHeader>
+              <CardBody className="space-y-3">
+                <input
+                  className="w-full rounded-md border border-border bg-canvas px-3.5 py-2.5 text-sm text-ink focus:border-accent focus:outline-none"
+                  name="title"
+                  defaultValue={eventRecord.title}
+                />
+                <textarea
+                  className="min-h-24 w-full rounded-md border border-border bg-canvas px-3.5 py-2.5 text-sm text-ink focus:border-accent focus:outline-none"
+                  name="description"
+                  defaultValue={eventRecord.description ?? ""}
+                />
+                <input
+                  className="w-full rounded-md border border-border bg-canvas px-3.5 py-2.5 text-sm text-ink focus:border-accent focus:outline-none"
+                  type="datetime-local"
+                  name="startsAt"
+                  defaultValue={toDateTimeLocal(eventRecord.startsAt)}
+                />
+                <input
+                  className="w-full rounded-md border border-border bg-canvas px-3.5 py-2.5 text-sm text-ink focus:border-accent focus:outline-none"
+                  type="datetime-local"
+                  name="endsAt"
+                  defaultValue={toDateTimeLocal(eventRecord.endsAt)}
+                />
+                <select
+                  className="w-full rounded-md border border-border bg-canvas px-3.5 py-2.5 text-sm text-ink focus:border-accent focus:outline-none"
+                  name="status"
+                  defaultValue={eventRecord.status}
+                >
+                  <option value="scheduled">Scheduled</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+                <Button className="w-full" type="submit" disabled={savePending}>
+                  {savePending ? "Saving..." : "Save changes"}
+                </Button>
+              </CardBody>
+            </form>
+          </Card>
         ) : null}
       </div>
     </WorkspaceShell>
@@ -278,14 +269,8 @@ function formatRsvpLabel(status: "going" | "maybe" | "not_going") {
   return status === "not_going" ? "Not going" : status;
 }
 
-function statusChipClass(status: EventRecord["status"]) {
-  return `rounded-full px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] ${
-    status === "cancelled" ? "bg-rose-500/20 text-rose-200" : "bg-emerald-500/20 text-emerald-200"
-  }`;
-}
-
-function rsvpChipClass(status: "going" | "maybe" | "not_going") {
-  if (status === "going") return "rounded-full bg-emerald-500/20 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-emerald-200";
-  if (status === "maybe") return "rounded-full bg-amber-300/20 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-amber-200";
-  return "rounded-full bg-slate-200/15 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-slate-300";
+function rsvpTone(status: "going" | "maybe" | "not_going") {
+  if (status === "going") return "success" as const;
+  if (status === "maybe") return "warning" as const;
+  return "neutral" as const;
 }

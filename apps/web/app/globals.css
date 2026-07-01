@@ -4,31 +4,32 @@
 
 :root {
   color-scheme: dark;
-  background: #0b1117;
-  color: #e6eef7;
+  background: #09090b;
+  color: #e4e4e7;
 }
 
 html {
-  background: #0b1117;
+  background: #09090b;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 18%),
-    linear-gradient(180deg, #0b1117 0%, #0d151d 56%, #111b25 100%);
-  color: #e6eef7;
+    radial-gradient(1200px 480px at 50% -10%, rgba(88, 101, 242, 0.08), transparent 60%),
+    #09090b;
+  color: #e4e4e7;
   font-family:
-    Inter, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  letter-spacing: -0.011em;
 }
 
 ::selection {
-  background: rgba(244, 193, 94, 0.24);
-  color: #fff7ea;
+  background: rgba(88, 101, 242, 0.3);
+  color: #ffffff;
 }
 
 * {
@@ -60,10 +61,10 @@ select {
 }
 
 ::placeholder {
-  color: #8fa2b7;
+  color: #5f5f68;
 }
 
 :focus-visible {
-  outline: 2px solid rgba(244, 193, 94, 0.72);
+  outline: 2px solid rgba(88, 101, 242, 0.6);
   outline-offset: 2px;
 }

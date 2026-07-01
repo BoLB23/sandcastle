@@ -15,16 +15,20 @@ export function AuthCard({
   backHref?: string;
 }) {
   return (
-    <main className="flex min-h-screen items-center justify-center px-4 py-10 sm:px-6">
-      <section className="relative w-full max-w-md overflow-hidden rounded-lg border border-slate-700/70 bg-slate-950/75 p-6 shadow-[0_24px_80px_rgba(2,6,23,0.55)] shadow-black/30 backdrop-blur-xl">
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-200/60 to-transparent" />
+    <main className="flex min-h-screen items-center justify-center bg-canvas px-4 py-10 sm:px-6">
+      <section className="w-full max-w-md rounded-lg border border-border bg-surface p-6">
         <div className="flex items-start justify-between gap-4">
-          <div className="space-y-2">
-            <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-amber-200/80">{eyebrow ?? "Sandcastle"}</p>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-50">{title}</h1>
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <div className="grid h-7 w-7 place-items-center rounded-md bg-accent text-xs font-bold text-accent-foreground">
+                S
+              </div>
+              <p className="text-xs font-medium uppercase tracking-[0.08em] text-ink-subtle">{eyebrow ?? "Sandcastle"}</p>
+            </div>
+            <h1 className="text-2xl font-semibold tracking-tight text-ink">{title}</h1>
           </div>
           <Link
-            className="shrink-0 rounded-full border border-slate-700/80 bg-slate-900/80 px-4 py-2 text-sm font-medium text-slate-200 shadow-sm shadow-black/20 transition hover:border-amber-200/40 hover:bg-slate-900 hover:text-white"
+            className="shrink-0 rounded-md border border-border px-3.5 py-2 text-sm font-medium text-ink-muted transition hover:border-border-strong hover:text-ink"
             href={backHref}
           >
             Back
@@ -50,10 +54,10 @@ export function Field({
   defaultValue?: string;
 }) {
   return (
-    <label className="block text-sm font-medium text-slate-200">
-      <span className="text-sm text-slate-100">{label}</span>
+    <label className="block text-sm font-medium text-ink">
+      <span className="text-sm text-ink">{label}</span>
       <input
-        className="mt-2 w-full rounded-lg border border-slate-700/80 bg-slate-900/85 px-4 py-3 text-slate-100 shadow-inner shadow-black/10 placeholder:text-slate-500 focus:border-amber-200/50 focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-200/30 focus:ring-offset-2 focus:ring-offset-slate-950"
+        className="mt-2 w-full rounded-md border border-border bg-canvas px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-subtle focus:border-accent focus:outline-none"
         name={name}
         type={type}
         placeholder={placeholder}

@@ -4,6 +4,7 @@ import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch, type AvailabilityResponse, type SessionResponse } from "../../lib/api";
 import { WorkspaceShell } from "../../components/workspace-shell";
+import { Button, Card, CardBody, CardHeader, Eyebrow } from "../../components/ui";
 
 const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
 const hours = ["19", "20", "21", "22"] as const;
@@ -58,75 +59,67 @@ export default function AvailabilityPage() {
   }));
 
   if (!session || !availability) {
-    return <main className="p-8 text-slate-200">{error ?? "Loading availability..."}</main>;
+    return <main className="p-8 text-ink-muted">{error ?? "Loading availability..."}</main>;
   }
 
   return (
     <WorkspaceShell user={session.user} active="availability">
-      <section className="rounded-lg border border-slate-800 bg-slate-950/80 p-5 sm:p-6">
-        <div className="flex flex-col gap-4 border-b border-slate-800 pb-5 lg:flex-row lg:items-end lg:justify-between">
+      <Card>
+        <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-amber-300/80">Availability</p>
-            <h2 className="mt-2 text-2xl font-semibold text-slate-100">Weekly evening availability</h2>
-            <p className="mt-2 text-sm text-slate-400">Eastern Time, 7 PM through 11 PM.</p>
+            <Eyebrow>Availability</Eyebrow>
+            <h2 className="mt-1.5 text-lg font-semibold text-ink">Weekly evening availability</h2>
+            <p className="mt-1.5 text-sm text-ink-muted">Eastern Time, 7 PM through 11 PM.</p>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:w-auto">
-            <div className="rounded-lg border border-slate-800 bg-slate-900/70 px-4 py-3">
-              <div className="text-xs uppercase tracking-[0.14em] text-slate-500">Open slots</div>
-              <div className="mt-1 text-2xl font-semibold text-slate-100">{selectedCount}</div>
+            <div className="rounded-md border border-border bg-surface-raised px-4 py-2.5">
+              <div className="text-xs uppercase tracking-[0.08em] text-ink-subtle">Open slots</div>
+              <div className="mt-0.5 text-xl font-semibold text-ink">{selectedCount}</div>
             </div>
-            <div className="rounded-lg border border-slate-800 bg-slate-900/70 px-4 py-3">
-              <div className="text-xs uppercase tracking-[0.14em] text-slate-500">Timezone</div>
-              <div className="mt-1 text-sm font-medium text-slate-100">America/New_York</div>
+            <div className="rounded-md border border-border bg-surface-raised px-4 py-2.5">
+              <div className="text-xs uppercase tracking-[0.08em] text-ink-subtle">Timezone</div>
+              <div className="mt-0.5 text-sm font-medium text-ink">America/New_York</div>
             </div>
           </div>
-        </div>
+        </CardHeader>
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-7">
-          {selectedByDay.map(({ day, count }) => (
-            <div key={day} className="rounded-lg border border-slate-800 bg-slate-900/60 px-4 py-3">
-              <div className="text-xs uppercase tracking-[0.14em] text-slate-500">{day.slice(0, 3)}</div>
-              <div className="mt-1 text-lg font-semibold text-slate-100">{count}/4</div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-6 overflow-x-auto pb-1">
-          <div className="grid min-w-[760px] grid-cols-[96px_repeat(7,minmax(84px,1fr))] gap-2">
-            <div />
-            {days.map((day) => (
-              <div key={day} className="px-2 py-2 text-center text-xs uppercase tracking-[0.14em] text-slate-400">
-                {day.slice(0, 3)}
+        <CardBody>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-7">
+            {selectedByDay.map(({ day, count }) => (
+              <div key={day} className="rounded-md border border-border bg-surface-raised px-4 py-2.5">
+                <div className="text-xs uppercase tracking-[0.08em] text-ink-subtle">{day.slice(0, 3)}</div>
+                <div className="mt-0.5 text-base font-semibold text-ink">{count}/4</div>
               </div>
             ))}
-
-            {hours.map((hour) => (
-              <AvailabilityRow
-                key={hour}
-                hour={hour}
-                availability={availability}
-                setAvailability={setAvailability}
-              />
-            ))}
           </div>
-        </div>
 
-        {error ? <div className="mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">{error}</div> : null}
+          <div className="mt-6 overflow-x-auto pb-1">
+            <div className="grid min-w-[760px] grid-cols-[96px_repeat(7,minmax(84px,1fr))] gap-2">
+              <div />
+              {days.map((day) => (
+                <div key={day} className="px-2 py-2 text-center text-xs uppercase tracking-[0.08em] text-ink-subtle">
+                  {day.slice(0, 3)}
+                </div>
+              ))}
 
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-sm text-slate-400">
-            {selectedCount === 0 ? "No evening windows selected." : `${selectedCount} evening windows selected.`}
+              {hours.map((hour) => (
+                <AvailabilityRow key={hour} hour={hour} availability={availability} setAvailability={setAvailability} />
+              ))}
+            </div>
           </div>
-          <button
-            className="rounded-lg bg-amber-300 px-5 py-3 font-medium text-slate-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-70"
-            type="button"
-            onClick={() => void onSave()}
-            disabled={pending}
-          >
-            {pending ? "Saving..." : "Save availability"}
-          </button>
-        </div>
-      </section>
+
+          {error ? <p className="mt-4 text-sm text-rose-300">{error}</p> : null}
+
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-sm text-ink-muted">
+              {selectedCount === 0 ? "No evening windows selected." : `${selectedCount} evening windows selected.`}
+            </div>
+            <Button onClick={() => void onSave()} disabled={pending}>
+              {pending ? "Saving..." : "Save availability"}
+            </Button>
+          </div>
+        </CardBody>
+      </Card>
     </WorkspaceShell>
   );
 }
@@ -142,7 +135,7 @@ function AvailabilityRow({
 }) {
   return (
     <>
-      <div className="flex items-center px-2 py-3 text-sm font-medium text-slate-400">{toHourLabel(hour)}</div>
+      <div className="flex items-center px-2 py-3 text-sm font-medium text-ink-muted">{toHourLabel(hour)}</div>
       {days.map((day) => {
         const slot = availability.slots.find((entry) => entry.day === day && entry.hour === hour);
         const checked = slot?.available ?? false;
@@ -166,10 +159,10 @@ function AvailabilityRow({
                   : current
               )
             }
-            className={`flex min-h-16 items-center justify-center rounded-lg border px-3 py-4 text-center text-sm font-medium transition ${
+            className={`flex min-h-16 items-center justify-center rounded-md border px-3 py-4 text-center text-sm font-medium transition ${
               checked
-                ? "border-amber-300/50 bg-amber-300/[0.14] text-amber-100"
-                : "border-slate-800 bg-slate-900/70 text-slate-500 hover:border-slate-700 hover:text-slate-300"
+                ? "border-accent/50 bg-accent-soft text-ink"
+                : "border-border bg-surface-raised text-ink-subtle hover:border-border-strong hover:text-ink-muted"
             }`}
           >
             {checked ? "Available" : "Busy"}
