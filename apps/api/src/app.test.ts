@@ -21,7 +21,7 @@ const loginUser = {
 
 const inviteToken = "generated-test-token";
 const inviteTokenHash = crypto.createHash("sha256").update(inviteToken).digest("hex");
-const futureDate = new Date("2026-07-01T12:00:00.000Z");
+const futureDate = new Date("2030-07-01T12:00:00.000Z");
 const futureDateIso = futureDate.toISOString();
 
 const inviteRecord = {
