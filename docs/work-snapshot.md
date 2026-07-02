@@ -37,6 +37,7 @@
 - GitHub Actions `CI` is green for commit `23978af`.
 - GitHub Actions `Build and Publish Docker Images` is green for commit `23978af`.
 - Live cluster deployment succeeded with immutable tag `v2026.06.24-23978af`.
+- Ingress TLS was corrected by switching cert-manager to the live `bolblab-cf-issuer`; `sandcastle.lab.bolblab.org` now serves a valid Let’s Encrypt certificate and HTTPS returns `307 /channels`.
 - Confirmed live state:
   - Sandcastle CNPG role/database exist
   - OpenBao contains the Sandcastle app secret
